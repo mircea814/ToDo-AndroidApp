@@ -1,4 +1,4 @@
-package com.frsarker.todotask;
+package com.frsarker.todoapp;
 
 import android.app.Activity;
 import android.text.Html;
