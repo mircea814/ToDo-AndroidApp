@@ -1,17 +1,25 @@
-package com.frsarker.todoapp;
+package com.frsarker.todotask;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.widget.NestedScrollView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import static com.frsarker.todotask.NotificationTask.CHANNEL_ID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<HashMap<String, String>> todayList = new ArrayList<HashMap<String, String>>();
     ArrayList<HashMap<String, String>> tomorrowList = new ArrayList<HashMap<String, String>>();
     ArrayList<HashMap<String, String>> upcomingList = new ArrayList<HashMap<String, String>>();
+    private NotificationManagerCompat notificationManager;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -39,10 +50,32 @@ public class MainActivity extends AppCompatActivity {
         taskListToday = findViewById(R.id.taskListToday);
         taskListTomorrow = findViewById(R.id.taskListTomorrow);
         taskListUpcoming = findViewById(R.id.taskListUpcoming);
+        notificationManager = NotificationManagerCompat.from(this);
+    }
+
+    public void SendOnChannel(){
+
+        Intent intent = new Intent(this, NotificationTask.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.notification_icon)
+                .setContentTitle("TODO")
+                .setContentText("You have tasks for today!")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        notificationManager.notify(1, builder.build());
     }
 
     public void openAddModifyTask(View view) {
         startActivity(new Intent(this, AddModifyTask.class));
+    }
+    public void openMapsActivity(View view) {
+        startActivity(new Intent(this, MapsActivity.class));
     }
     @Override
     public void onResume() {
@@ -50,17 +83,14 @@ public class MainActivity extends AppCompatActivity {
         populateData();
     }
 
-
     public void populateData() {
         mydb = new DBHelper(this);
-
         runOnUiThread(new Runnable() {
             public void run() {
                 fetchDataFromDB();
             }
         });
     }
-
 
     public void fetchDataFromDB() {
         todayList.clear();
@@ -88,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 todayContainer.setVisibility(View.VISIBLE);
                 loadListView(taskListToday, todayList);
+                SendOnChannel();
             }
 
             if (tomorrowList.isEmpty()) {
@@ -105,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
 
     public void loadDataList(Cursor cursor, ArrayList<HashMap<String, String>> dataList) {
         if (cursor != null) {
